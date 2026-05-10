@@ -1,0 +1,100 @@
+Privacy Policy
+
+The California Privacy Protection Agency (CalPrivacy) values the security and privacy of your personal information and is committed to protecting your privacy rights, as detailed in Article 1 of the Constitution of California, Information Practices Act of 1977opens in a new window (Civ. Code §§ 1798-1798.78), California Public Records Actopens in a new window (Gov. Code §§ 7920, et seq.), and other applicable laws pertaining to information privacy.   
+
+In accordance with these laws, it is our policy to limit the collection and safeguard the privacy of personal information collected or maintained by the Agency. 
+
+Information collected
+We collect personal information only through lawful means and for specific purposes set forth below and in our notices at collection.  
+
+Interaction with the Agency.  We may collect the personal information identified below when you interact with the Agency in the following ways:    
+
+Submission of a Complaint.  When you submit a complaint through our complaint form, you may provide us with name, email address, phone number, address, and other personal information (e.g., employment history, financial information, internet activity) related to your complaint.  The complaint form also uses technologies to reduce misuse and unwanted processing, such as spam, phishing, or bot activity. 
+Delete Request and Opt-out Platform (DROP). When you use DROP as a consumer, you may provide us with your name(s), email(s), phone number(s), date of birth, zip code(s), Mobile Advertising ID(s), Connected TV ID(s), and VIN(s). We may also collect data elements like IP address and activity logs to help us understand how to enhance the product and ensure safety. For data brokers, we also collect other legally required information, such as your Taxpayer Identification Number (TIN) or Employer Identification Number (EIN), business address, and names and titles of staff for identification purposes and fraud prevention. 
+Attending Board Meetings.  When you attend Board meetings in person, you may provide your name and email address.  When you attend via Zoom, you may reveal some information, such as your name, IP address, email address, and phone number.   
+Emails or PRA Requests to the Agency.  When you email the Agency or make a request under the Public Records Act, you may provide us with your name, address, email address, and the contents of your email.  
+Public Comments during Rulemaking or Board Meetings.  When you speak or comment during the Agency’s rulemaking activities or during Board meetings, you may provide your name, contact information (e.g., email address, phone number, mailing address), and other personal information in the contents of the comment. 
+Joining an email list.  When you join a listserv offered by the Agency, you may provide us with your email address. 
+Other Rulemaking Activities.  You may provide us with your name, email address, and other information when participating in the Agency’s pre-rulemaking activities.    
+Website. We automatically collect information about your visits to our website to help run and improve our services, and for data security purposes.  Some of the information we automatically collect and store are:  
+
+A partial Internet Protocol address, approximate location derived from IP, and domain name is collected.  
+The type of browser and operating system you used. 
+Device type, screen settings, language and regional settings. 
+The city and zip code you used it from. 
+The date and time you visited this website and session duration. 
+Pages viewed, clicks, scrolls, or other interactions with page elements. 
+The webpages or services you accessed at this website. 
+The website you visited prior to coming to this website. 
+The website you visit as you leave this website. 
+Campaign or referral information, where available.  
+If you downloaded a form, file, or PDF, the form, file, or PDF that was downloaded. 
+This information is used to improve the content of our web services and to help us understand how people are using our services. We take steps to limit how this information can be used by our service providers.    
+
+Investigations. We may collect personal information through investigations of potential or alleged violations of the CCPA and the Delete Act.   
+
+Use of your personal information
+The personal information we obtain will be used for the purposes for which it was provided and in accordance with the duties required of the Agency under the CCPA and the Delete Act (see Civ. Code §§ 1798.199.40opens in a new window, 1798.99.82opens in a new window).  For example, this includes: 
+
+Processing and investigating consumer complaints to broadly monitor industry compliance or to investigate and enforce the CCPA, the Delete Act, or other law relevant to the complaint, including in an administrative or judicial proceeding. 
+Facilitating the public’s participation in the Agency’s rulemaking activities, such as by maintaining an email listserv to inform the public of rulemaking activities and obtaining public comment on potential regulations as required by the Administrative Procedure Act.  
+Promoting awareness and understanding of the CCPA and providing guidance to consumers of their rights and businesses of their obligations.  
+Cooperating with other agencies and other authorities with jurisdiction to enforce privacy laws and ensure consistent application of privacy protections.  
+Facilitating the public’s participation in the Board’s public meetings.  
+Monitoring basic website statistics, such as unique visitors per day.  
+Ensuring the safety and security of our website.     
+Facilitate our obligations to develop and maintain the Data Broker Registry and the DROP. 
+Address inquiries that you make with the Agency, such as public records act requests and media or human resources questions. 
+Disclosure and sharing of personal information
+We do not sell your personal information. Personal information will not be disclosed, made available, or otherwise used for purposes other than those specified, except with your consent, or as authorized by law or regulation. Government Code § 11015.5(a)(6) also prohibits all state agencies from distributing or selling any electronically collected personal information about users to any third party without the permission of the user.  
+
+We may, however, disclose or share your personal information in limited circumstances, such as when:  
+
+You give us permission (including through your submission of a sworn complaint).   
+We receive a request from a party with legal authority to obtain the information, such as a subpoena, court order, or government order.   
+We transfer or share your complaint or public comment with another California agency, state, local, federal, or foreign government, as appropriate.   
+We disclose personal information in connection with rulemaking activities or facilitating public Board meetings, such as when coordinating public hearings or submitting materials to the Office of Administrative Law.   
+We disclose personal information provided in a deletion request in DROP to registered data brokers, in compliance with the Delete Act.  
+We are complying with a valid California Public Records Act request. See “Public Disclosures” section below for more information about the Public Records Act.   
+The Agency is supported by other state agencies, including the Department of Consumer Affairs and the Department of Technology, which provide IT services and support for our websites and web apps. These Departments adhere to their own privacy policies.  The DROP is built and maintained by the California Department of Technology (CDT). When using the DROP, both CalPrivacy and CDT’s policies apply. View CDT’s privacy policyopens in a new window. 
+
+Public disclosures
+Your personal information may be part of a public record that could be subject to a Public Records Act request.  The California Public Records Actopens in a new window (PRA), Gov. Code §§ 7920 et seq., gives the public the right to inspect government records upon request, with some exemptions.  For example, the Agency is exempt from disclosing portions of public records that contain personnel, medical, or similar files for Agency employees, and records pertaining to pending litigation.  Electronically collected personal information is also exempt from disclosure in response to PRA requests, as well as enforcement-related investigative files that may contain personal information. The exemptions are listed in Government Code §§ 7930.100, et seq.  
+
+In response to a PRA request, we will redact personal information if an exemption applies, or if required to do so by other laws.  Find out more information about how we handle PRA requestsopens in a new window. 
+
+In the event of a conflict between this privacy notice and the Public Records Act, the Information Practices Act and/or other law governing the disclosure of records, the Public Records Act, the Information Practices Act and/or other applicable law will control.  
+
+Links
+Our website may contain links to other websites that are owned and operated by third parties. These are provided for the convenience and information of our visitors. We do not control the privacy practices of these websites and are not responsible for the content or practices of any linked third-party website. 
+
+Cookies
+We do not collect information such as names, addresses, and email addresses from individuals browsing the Agency’s website. However, when you visit our website or DROP, a “cookie” may be saved on your computer. 
+
+A cookie is a tiny file stored on your computer by your browser that helps us recognize your unique computer and your preferences when using our website. For example, you may choose a high contrast setting, and the cookie communicates this next time you visit. 
+
+You can remove cookies on your computer by accessing your browser’s preferences menu and deleting existing cookies. 
+
+How we protect your information
+The Agency has security measures in place to safeguard and protect the personal information collected and maintained by the Agency from unauthorized access, disclosure, and loss. We rely on services provided by Department of Technologyopens in a new window and Department of Consumer Affairsopens in a new window to host our websites, the DROP, and provide IT services. For more information about their privacy practices, please see their respective privacy policies. 
+
+Your rights
+In accordance with the Information Practices Actopens in a new window, you have the right to review the personal information we have collected about you and request a correction of any personal information that is not accurate, relevant, timely, or complete. You also have the right to have any electronically collected personal information deleted by the Agency, without reuse or distribution. 
+
+To do so, submit the request to info@cppa.ca.gov and include “Access Request” or “Correction Request” in the subject line. We will take reasonable steps to verify your identity before granting access or making corrections to any personal information. 
+
+Changes to our privacy policy
+We may update and revise our privacy policy, which we will post on this page.  If the changes are significant, we will note so at the top of this page.  
+
+Contact information
+If you have any questions or concerns about this policy, contact our Chief Privacy Officer.
+
+Mailing Address: CPPA Privacy Officer
+400 R Street Suite 350
+Sacramento, CA 95811
+
+Email: info@cppa.ca.gov with the subject line: “Attn: Chief Privacy Officer”
+
+Phone Number: (916) 572-290
+
+Privacy Policy of [Department/Agency/Company Name]Effective Date: [Date]1. Our Commitment to PrivacyThis website is maintained by [Name]. Our privacy policy is to protect the personal information of our users, adhering to the Information Practices Act of 1977 and Government Code Section 11015.5.2. Information We CollectVoluntary Information: We only collect personal information (name, email, address) if you voluntarily provide it through emails, forms, or surveys.Automatic Information: When you browse, we collect IP addresses, browser types, operating systems, and page navigation data to analyze traffic and improve user experience.Cookies: [Explain if you use cookies for session management or analytics].3. How We Use InformationTo facilitate a response to your inquiries.To improve website content and security.We do not sell, distribute, or make available personal information collected on this site to third parties without permission, as prohibited by Gov. Code § 11015.5(a)(6).4. Your RightsYou have the right to inspect personal information maintained about you.You may request to have your personal information deleted, corrected, or discarded.5. SecurityWe use, at a minimum, industry-standard security technology to protect information gathered on our platforms from unauthorized access.6. Contact InformationFor questions or to exercise your rights, please contact:[Department/Company Name][Address][Email][Phone Number]
