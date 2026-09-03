@@ -1,0 +1,217 @@
+keytool -genkeypair \
+  -alias vaadintomcat \
+  -keyalg RSA \
+  -keysize 2048 \
+  -storetype PKCS12 \
+  -keystore keystore.p12 \
+  -validity 3650 \
+  -storepass changeit \
+  -dname "CN=localhost, OU=Development, O=YourCompany, L=City, ST=State, C=US" \
+  -ext san=dns:localhost
+
+rem piv
+keytool -genkeypair -alias tomcat -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore keystore.p12 -validity 365 -ext "san=dns:localhost,ip:127.0.0.1" -dname "CN=localhost, OU=Development, O=Local, L=Local, C=US"
+keytool -exportcert -alias tomcat -keystore keystore.p12 -storetype PKCS12 -file localhost.crt
+
+
+keytool -exportcert \
+  -alias vaadintomcat \
+  -keystore keystore.p12 \
+  -storepass changeit \
+  -file vaadincert.crt
+
+keytool -importcert \
+  -alias vaadintomcat \
+  -file vaadincert.crt \
+  -keystore truststore.p12 \
+  -storetype PKCS12 \
+  -storepass changeit \
+  -noprompt
+
+
+
+pause
+rem 3. Place the Files in Your ProjectMove both
+rem generated files (keystore.p12 and truststore.p12) into
+rem your Spring Boot project's resources folder:textsrc/main/resources/
+rem ├── keystore.p12
+rem └── truststore.p12
+
+4. Configure application.propertiesAdd the following properties to point your embedded Tomcat instance to the files:properties# Port setup for HTTPS
+server.port=8443
+
+# KeyStore Configuration (Server Identity)
+server.ssl.key-store=classpath:keystore.p12
+server.ssl.key-store-password=changeit
+server.ssl.key-store-type=PKCS12
+server.ssl.key-alias=vaadintomcat
+
+# TrustStore Configuration (Only required if using Client Authentication / mTLS)
+server.ssl.trust-store=classpath:truststore.p12
+server.ssl.trust-store-password=changeit
+server.ssl.trust-store-type=PKCS12
+
+# Optional: Enable client authentication if you want Tomcat to force users to present a cert
+# server.ssl.client-auth=need
+
+rem server.port=8443
+server.ssl.enabled=true
+rem server.ssl.key-store-type=PKCS12
+rem .ssl.key-store=classpath:keystore.p12
+rem server.ssl.key-store-password=secretpassword
+rem .ssl.key-alias=tomcat
+
+4. Remove the Warning by Trusting the Certificate in
+ Your OS/BrowserBrowsers mark self-signed certificates as
+ insecure unless explicitly told to trust the specific certificate.
+Windows: 
+Double-click localhost.crt -> 
+Click Install Certificate ->
+Choose Local Machine ->
+Place it in Trusted Root Certification Authorities.
+macOS: 
+Double-click localhost.crt to open Keychain Access -> 
+Find the certificate -> 
+Right-click -> Get Info ->
+ Expand Trust ->
+ Set When using this certificate to Always Trust.
+Firefox: Uses its own store. Go to Settings ->
+ Privacy & Security -> Certificates -> View Certificates ->
+ Authorities -> 
+Import localhost.crt and check "Trust this CA to identify websites".
+
+
+Server ConfigurationConfigure your servlet container (Tomcat, Jetty) 
+or reverse proxy to request or require client certificates (clientAuth="true" or clientAuth="want" in Tomcat) and trust the federal PIV/CAC root certificate authorities.Reading the PIV Certificate in JavaOnce the browser negotiates the TLS handshake using the PIV card, the container populates the jakarta.servlet.request.X509Certificate attribute in the request.You can extract and validate this certificate in a Vaadin utility or security filter:javaimport com.vaadin.flow.server.VaadinServletRequest;
+import java.security.cert.X509Certificate;
+
+public class PivSecurityUtils {
+
+    public static X509Certificate getClientCert() {
+        VaadinServletRequest request = VaadinServletRequest.getCurrent();
+        if (request != null) {
+            X509Certificate[] certs = (X509Certificate[]) request.getHttpServletRequest()
+                    .getAttribute("jakarta.servlet.request.X509Certificate");
+            if (certs != null && certs.length > 0) {
+                try {
+                    certs[0].checkValidity();
+                    return certs[0]; // Authenticated PIV certificate
+                } catch (Exception e) {
+                    // Certificate expired or invalid
+                }
+            }
+        }
+        return null;
+    }
+}
+
+1. The Spring Security ConfigurationYou need to enable .x509() authentication. Since Vaadin provides its own VaadinSecurityConfigurer for view protection, you apply both.javaimport com.vaadin.flow.spring.security.VaadinSecurityConfigurer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    private final X509UserDetailsService x509UserDetailsService;
+
+    public SecurityConfig(X509UserDetailsService x509UserDetailsService) {
+        this.x509UserDetailsService = x509UserDetailsService;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // 1. Apply Vaadin default protections (CSRF, Request Cache, View Access Control)
+        http.with(VaadinSecurityConfigurer.vaadin(), configurer -> {});
+
+        // 2. Enable X.509 Pre-Authentication for PIV Cards
+        http.x509(x509 -> x509
+            .subjectPrincipalRegex("CN=(.*?)(?:,|$)") // Extracts the Common Name (CN) from PIV Card
+            .userDetailsService(x509UserDetailsService)
+        );
+
+        return http.build();
+    }
+}
+Use code with caution.2. Extracting PIV Data with UserDetailsServiceWhen a user inserts their PIV card, Spring Security extracts the principal string (e.g., the CN). You must match this identifier against your database or active directory to load their roles and account status.javaimport org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+import java.util.Collections;
+
+@Service
+public class X509UserDetailsService implements UserDetailsService {
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // 'username' here is the CN extracted from the PIV certificate via regex
+        System.out.println("Authenticating PIV Card for CN: " + username);
+
+        // TODO: Query your database or LDAP to find the user and their roles
+        if ("John Doe 1234567890".equals(username)) { 
+            return new User(
+                username, 
+                "", // Password is unused/blank for X.509 pre-auth
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+            );
+        }
+
+        throw new UsernameNotFoundException("User not authorized with this PIV card.");
+    }
+}
+Use code with caution.3. Accessing the PIV Certificate inside a Vaadin ViewOnce authenticated, you can inject Vaadin's AuthenticationContext to view the logged-in user or safely pull the raw X509Certificate from the current servlet request.javaimport com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinServletRequest;
+import com.vaadin.flow.spring.security.AuthenticationContext;
+import jakarta.annotation.security.PermitAll;
+import java.security.cert.X509Certificate;
+import java.util.Optional;
+
+@Route("")
+@PermitAll // Rejects unauthenticated PIV users automatically
+public class MainView extends VerticalLayout {
+
+    public MainView(AuthenticationContext authContext) {
+        // Access standard Spring Security user details via Vaadin context
+        Optional<String> username = authContext.getPrincipalName();
+        
+        add(new H1("Welcome to the Secure Portal"));
+        username.ifPresent(name -> add(new Paragraph("Authenticated CN: " + name)));
+
+        // Optional: Extract the raw X509 Certificate metadata if needed
+        VaadinServletRequest currentRequest = VaadinServletRequest.getCurrent();
+        if (currentRequest != null) {
+            X509Certificate[] certs = (X509Certificate[]) currentRequest
+                    .getAttribute("jakarta.servlet.request.X509Certificate");
+            
+            if (certs != null && certs.length > 0) {
+                X509Certificate principalCert = certs[0];
+                add(new Paragraph("Issuer: " + principalCert.getIssuerX500Principal().getName()));
+                add(new Paragraph("Serial Number: " + principalCert.getSerialNumber()));
+            }
+        }
+    }
+}
+
+Use code with caution.
+4. Critical Server Requirement (Prerequisite)Spring Security
+ cannot prompt the user for a PIV card by itself.
+ Your Embedded Tomcat (or reverse proxy like NGINX/Apache) must be
+ configured for Mutual TLS (Client Auth).For local testing in your
+ application.properties:properties
+server.port=8443
+server.ssl.enabled=true
+server.ssl.client-auth=need
+server.ssl.key-store=classpath:server-keystore.p12
+server.ssl.key-store-password=yourpassword
+server.ssl.trust-store=classpath:piv-truststore.p12
+server.ssl.trust-store-password=trustpassword
+Use code with caution.client-auth=need forces the browser to prompt the user to select their PIV card/certificate before any web traffic reaches Vaadin.Are you planning to extract a specific attribute from the PIV card (like the EDIPI/EDI-PN number from the Subject Alternative Name), or is a standard Common Name (CN) regex match sufficient for your system?
