@@ -1,0 +1,436 @@
+1. Conceptual Workflow[ Java App ] 
+   │ ──> 1. Prompts for Username
+   │ ──> 2. Accesses Smart Card (SunPKCS11)
+   │ ──> 3. Prompts for PIV PIN (Keystore Password)
+   │ ──> 4. Extracts X.509 Cert & Signs SSH Handshake
+   ▼
+[ Network Device / Linux Server ] ──> 5. Validates Cert Against Trust Anchor ──> 6. Runs Command
+2. Configuration Code (SunPKCS11)To talk to the PIV reader, Java needs a PKCS#11 configuration file pointing to your native smart card middleware (such as OpenSC or ActivClient).Create a file named pkcs11.cfg:ininame = SmartCard
+# Path to your local OS PIV/CAC driver library
+library = /usr/local/lib/opensc-pkcs11.so
+slotListIndex = 0
+Use code with caution.(On Windows, this might be C:\\Windows\\System32\\acsp.dll or opensc-pkcs11.dll).3. Java ImplementationThis script prompts the user via a terminal console for their username and PIV Card PIN, unlocks the hardware certificate, initiates an X509-capable SSH handshake via Apache MINA SSHD, and returns the output of the executed command.javaimport org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.session.ClientSession;
+import org.apache.sshd.client.channel.ChannelExec;
+import java.io.ByteArrayOutputStream;
+import java.io.Console;
+import java.io.ByteArrayInputStream;
+import java.security.KeyStore;
+import java.security.Provider;
+import java.security.Security;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPrivateKey;
+
+public class PivSshExecutor {
+    public static void main(String[] args) {
+        Console console = System.console();
+        if (console == null) {
+            System.err.println("No console available.");
+            return;
+        }
+
+        // 1. Gather network & profile requirements
+        String host = "192.168.1.50";
+        int port = 22;
+        String command = "show version"; // Example network device command
+
+        String username = console.readLine("Enter network username: ");
+        char[] pin = console.readPassword("Enter PIV Card PIN: ");
+
+        // 2. Initialize PKCS11 Smart Card Provider
+        try {
+            String configString = "--name=SmartCard\nlibrary=/usr/local/lib/opensc-pkcs11.so\nslotListIndex=0";
+            Provider provider = Security.getProvider("SunPKCS11");
+            provider = provider.configure(configString);
+            Security.addProvider(provider);
+
+            // 3. Load Smart Card Keystore using PIN
+            KeyStore keyStore = KeyStore.getInstance("PKCS11", provider);
+            keyStore.load(null, pin);
+
+            // Get the certificate alias (usually 9a or 9c for PIV cards)
+            String alias = keyStore.aliases().nextElement();
+            X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
+            RSAPrivateKey privateKey = (RSAPrivateKey) keyStore.getKey(alias, null);
+
+            System.out.println("Successfully unlocked PIV Card for: " + cert.getSubjectX500Principal().getName());
+
+            // 4. Start SSH Engine 
+            try (SshClient client = SshClient.setUpDefaultClient()) {
+                client.start();
+                
+                try (ClientSession session = client.connect(username, host, port).verify(10000).getSession()) {
+                    
+                    // Attach the hardware-backed asymmetric keys into the context
+                    session.addPublicKeyIdentity(new java.security.KeyPair(cert.getPublicKey(), privateKey));
+                    session.auth().verify(10000);
+                    
+                    System.out.println("SSH Authentication Successful via X.509 Identity.");
+
+                    // 5. Run the target network command
+                    try (ChannelExec channel = session.createExecChannel(command)) {
+                        ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
+                        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
+                        
+                        channel.setOut(responseStream);
+                        channel.setErr(errorStream);
+                        channel.open().verify(5000);
+                        
+                        // Wait for completion
+                        channel.waitFor(java.util.EnumSet.of(org.apache.sshd.client.channel.ClientChannelEvent.CLOSED), 0);
+                        
+                        System.out.println("\n--- COMMAND OUTPUT ---");
+                        System.out.println(responseStream.toString());
+                    }
+                }
+                client.stop();
+            }
+
+        } catch (Exception e) {
+            System.err.println("Execution failed: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}
+Use code with caution.
+import javax.security.auth.callback.*;
+import java.security.AuthProvider;
+import java.security.Security;
+import java.io.ByteArrayInputStream;
+
+String config = "name = PIVCard\nlibrary = /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so";
+AuthProvider provider = (AuthProvider) Security.getProvider("SunPKCS11");
+provider = provider.configure(new ByteArrayInputStream(config.getBytes()));
+Security.addProvider(provider);
+
+// Set up callback handler to prompt for the PIV PIN
+provider.setCallbackHandler(new CallbackHandler() {
+    @Override
+    public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
+        for (Callback cb : callbacks) {
+            if (cb instanceof PasswordCallback) {
+                PasswordCallback pwdCb = (PasswordCallback) cb;
+                // Programmatically retrieve or prompt user for PIN here
+                // e.g., via a Swing dialog or console read
+                pwdCb.setPassword(fetchPinFromUserInterface());
+            } else {
+                throw new UnsupportedCallbackException(cb);
+            }
+        }
+    }
+});
+
+// Log in to the token (triggers the PIN prompt callback)
+provider.login(null, provider.getCallbackHandler());
+KeyStore keyStore = KeyStore.getInstance("PKCS11", provider);
+keyStore.load(null, null); // PIN already supplied via login/callback
+
+
+///////////////////////
+import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.session.ClientSession;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
+import java.security.KeyPair;
+
+public class PivSshClient {
+    public static void main(String[] args) {
+        String host = "your.network.host";
+        int port = 22;
+        String username = "your_username";
+
+        try {
+            // 1. Access the Windows Certificate Store (Interactions prompt for PIV PIN here)
+            KeyStore keyStore = KeyStore.getInstance("Windows-MY");
+            keyStore.load(null, null); // PIN prompt triggered implicitly on cryptographic signature
+
+            // 2. Select your PIV Card Alias (e.g., matching a thumbprint or User Principal Name)
+            String alias = "your-piv-certificate-alias"; 
+            X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
+            PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, null);
+
+            if (privateKey == null || cert == null) {
+                throw new IllegalStateException("PIV Key or X.509 Certificate not found in Windows-MY store.");
+            }
+
+            // Convert into a standard Java KeyPair
+            KeyPair pivKeyPair = new KeyPair(cert.getPublicKey(), privateKey);
+
+            // 3. Establish Apache MINA Client Session
+            try (SshClient client = SshClient.setUpDefaultClient()) {
+                client.start();
+                
+                try (ClientSession session = client.connect(username, host, port).verify().getSession()) {
+                    // Inject the PIV X.509 public-private context
+                    session.addPublicKeyIdentity(pivKeyPair);
+                    
+                    // Fire authentication process
+                    session.auth().verify();
+                    System.out.println("Successfully authenticated with PIV card via Windows-MY!");
+                    
+                    // Execute remote command example
+                    String response = session.executeRemoteCommand("whoami");
+//java -cp ".;lib/*" PivSshClient
+                    System.out.println("Command Output: " + response);
+                } finally {
+                    client.stop();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+///////
+import java.io.Console;
+// ... (prior setup)
+
+try (ClientSession session = client.connect(username, host, port).verify().getSession()) {
+    // 1. Add PIV Card Identity
+    session.addPublicKeyIdentity(pivKeyPair);
+
+    // 2. Prompt for Password via Terminal
+    Console console = System.console();
+    if (console != null) {
+        char[] passwordArray = console.readPassword("Enter network password for %s: ", username);
+        String password = new String(passwordArray);
+        session.addPasswordIdentity(password);
+    }
+
+    // 3. Verify MFA chain
+    session.auth().verify();
+}
+////////
+import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.session.ClientSession;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
+import java.security.KeyPair;
+
+public class PivSshClient {
+    public static void main(String[] args) {
+        String host = "your.network.host";
+        int port = 22;
+        String username = "your_username";
+
+        try {
+            // 1. Access the Windows Certificate Store (Interactions prompt for PIV PIN here)
+            KeyStore keyStore = KeyStore.getInstance("Windows-MY");
+            keyStore.load(null, null); // PIN prompt triggered implicitly on cryptographic signature
+
+            // 2. Select your PIV Card Alias (e.g., matching a thumbprint or User Principal Name)
+            String alias = "your-piv-certificate-alias"; 
+            X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
+            PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, null);
+
+            if (privateKey == null || cert == null) {
+                throw new IllegalStateException("PIV Key or X.509 Certificate not found in Windows-MY store.");
+            }
+
+            // Convert into a standard Java KeyPair
+            KeyPair pivKeyPair = new KeyPair(cert.getPublicKey(), privateKey);
+
+            // 3. Establish Apache MINA Client Session
+            try (SshClient client = SshClient.setUpDefaultClient()) {
+                client.start();
+                
+                try (ClientSession session = client.connect(username, host, port).verify().getSession()) {
+                    // Inject the PIV X.509 public-private context
+                    session.addPublicKeyIdentity(pivKeyPair);
+                    
+                    // Fire authentication process
+                    session.auth().verify();
+                    System.out.println("Successfully authenticated with PIV card via Windows-MY!");
+                    
+                    // Execute remote command example
+                    String response = session.executeRemoteCommand("whoami");
+                    System.out.println("Command Output: " + response);
+                } finally {
+                    client.stop();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+import java.io.Console;
+// ... (prior setup)
+
+try (ClientSession session = client.connect(username, host, port).verify().getSession()) {
+    // 1. Add PIV Card Identity
+    session.addPublicKeyIdentity(pivKeyPair);
+
+    // 2. Prompt for Password via Terminal
+    Console console = System.console();
+    if (console != null) {
+        char[] passwordArray = console.readPassword("Enter network password for %s: ", username);
+        String password = new String(passwordArray);
+        session.addPasswordIdentity(password);
+    }
+
+    // 3. Verify MFA chain
+    session.auth().verify();
+}
+////////
+import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.session.ClientSession;
+import org.apache.sshd.client.channel.ChannelExec;
+import org.apache.sshd.common.config.keys.PublicKeyEntry;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.KeyPair;
+import java.security.PublicKey;
+import java.security.cert.X509Certificate;
+
+public class PivSshExecutor {
+    public static void main(String[] args) {
+        String host = "your.network.host";
+        int port = 22;
+        String username = System.getenv("SSH_USER"); // Fetch username securely
+        
+        // Securely retrieve the encrypted password/passphrase from environment variables
+        // if your architecture relies on an additional password fallback layer.
+        String encryptedPass = System.getenv("SECURE_SSH_PASS"); 
+        String decryptedPass = decryptEnvPassword(encryptedPass);
+
+        try {
+            // 1. Load the PIV Card profile via Windows-MY (SunMSCAPI)
+            KeyStore keyStore = KeyStore.getInstance("Windows-MY", "SunMSCAPI");
+            keyStore.load(null, null); // Will trigger Windows Card Selection prompt if required
+
+            // Define the specific alias of your PIV Authentication certificate (typically 9a slot)
+            String alias = "your-piv-cert-alias"; 
+            
+            X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
+            PublicKey publicKey = cert.getPublicKey();
+            
+            // The private key remains safe inside the HSM/PIV hardware; Java receives a pointer handle
+            PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, null); 
+            KeyPair pivKeyPair = new KeyPair(publicKey, privateKey);
+
+            // 2. Initialize Apache MINA SSH Client
+            try (SshClient client = SshClient.setUpDefaultClient()) {
+                client.start();
+                
+                // Connect to remote network host
+                try (ClientSession session = client.connect(username, host, port).verify().getSession()) {
+                    
+                    // Add X509 PIV identity. Note: The Windows KSP pops up the PIN window here 
+                    // during the internal cryptographic signing challenge.
+                    session.addPublicKeyIdentity(pivKeyPair); 
+                    
+                    // Authenticate session
+                    session.auth().verify();
+                    
+                    // 3. Run Command over SSH
+                    String command = "echo 'Executing secure command...'";
+                    try (ChannelExec channel = session.createExecChannel(command);
+                         ByteArrayOutputStream responseStream = new ByteArrayOutputStream();
+                         ByteArrayOutputStream errorStream = new ByteArrayOutputStream()) {
+                        
+                        channel.setOut(responseStream);
+                        channel.setErr(errorStream);
+                        channel.open().verify();
+                        
+                        // Wait for command completion
+                        channel.waitFor(java.util.EnumSet.of(org.apache.sshd.client.subsystem.CmdOutputs.EXIT_STATUS), 0);
+                        
+                        System.out.println("Output: " + responseStream.toString(StandardCharsets.UTF_8));
+                    }
+                } finally {
+                    client.stop();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static String decryptEnvPassword(String encryptedData) {
+        if (encryptedData == null) return null;
+        // Implement your symmetric decryption logic here (e.g., using AES-GCM via Windows DPAPI)
+        return encryptedData; 
+    }
+}
+Windows PowerShell: Setting up the Encrypted Env VarBefore running the Java program, you can encrypt text via the Windows Data Protection API (DPAPI), binding the decryption capability exclusively to the logged-in Windows OS user profile.powershell# 1. Encrypt your secondary password string using DPAPI
+$SecretText = "YourNetworkPassword123!"
+$EncryptedText = $SecretText | ConvertTo-SecureString -AsPlainText | ConvertFrom-SecureString
+
+# 2. Assign values to environment contexts
+$env:SSH_USER = "your_domain_username"
+$env:SECURE_SSH_PASS = $EncryptedText
+
+# 3. Launch your compiled Java SSH execution payload
+java -cp ".;lib/*" PivSshExecutor
+Use code with caution.
+
+----------------------------------------------
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
+import java.util.Enumeration;
+
+public class PivAuthentication {
+    public static void main(String[] args) {
+        try {
+            // Load the native Windows Current User / Local Machine certificate store
+            KeyStore keyStore = KeyStore.getInstance("Windows-MY");
+            keyStore.load(null, null); // No password needed to initialize the store
+
+            Enumeration<String> aliases = keyStore.aliases();
+            while (aliases.hasMoreElements()) {
+                String alias = aliases.nextElement();
+                
+                // Get the X.509 Certificate
+                X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
+                
+                // Filter for your specific PIV certificate (e.g., by Subject DN or Usage)
+                if (cert != null && cert.getSubjectDN().getName().contains("YOUR_USERNAME")) {
+                    System.out.println("Found PIV Certificate: " + cert.getSubjectDN());
+                    
+                    // This call will trigger the native Windows PIV PIN prompt when used for signing
+                    PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, null);
+                    
+                    // Pass this privateKey and cert to your Apache MINA SSHD client
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.session.ClientSession;
+import java.security.KeyPair;
+
+// Wrap your PIV PrivateKey and X509 Public Key into a KeyPair
+KeyPair pivKeyPair = new KeyPair(cert.getPublicKey(), privateKey);
+
+SshClient client = SshClient.setUpDefaultClient();
+client.start();
+
+try (ClientSession session = client.connect("username", "host", 22).verify().getSession()) {
+    // Add the PIV credential to the session
+    session.addPublicKeyIdentity(pivKeyPair);
+    
+    // This action will trigger the OS Windows Security PIN prompt dialog box
+    session.auth().verify(10000); 
+    
+    System.out.println("SSH Authentication Successful via PIV!");
+}
+import javax.crypto.Cipher;
+import java.util.Base64;
+
+public static String encryptPayload(X509Certificate cert, String payload) throws Exception {
+    Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+    cipher.init(Cipher.ENCRYPT_MODE, cert.getPublicKey());
+    byte[] encryptedBytes = cipher.doFinal(payload.getBytes("UTF-8"));
+    return Base64.getEncoder().encodeToString(encryptedBytes);
+}
+// Example payload: "username=myUser;password=mySecretPassword"
