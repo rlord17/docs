@@ -1,0 +1,67 @@
+Here is a production-ready, standard Kubernetes Deployment YAML template running an Nginx web server. [1] (/goto?url=CAESjgEB6zswFTGYs8NRm3o24nOqlKJHvGldBUPrUhwjNHM4HC_VZ7cnt7OofK73oRLhG1avS0yK5mpG4-6fepks6LGHmfoWmJVU7m8ZXDfXt3lApS8FU15KK_RUCwlyXopdaX79CfdVWGxtHKYOjDyflutEoKdxFCqFJ7QNMhoXxOtZ8uvlCSt-JnlvTOFrzcW0)
+yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx-container
+        image: nginx:1.25.3
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+Use code with caution.
+
+Key Field Breakdown
+
+• apiVersion & kind: Defines the Kubernetes object type. For deployments, this is always apps/v1. [1] (/goto?url=CAESjQEB6zswFR6z7UHKXuEah7U8MpP0A2mEqpsaY1CGuCBinp0rt-BSHhBx-KFkNPZynBdOuY_bYnNXRQv-NonNLStMZt1tsBTrj2UJAWKgeLCMG4WCYXUNs4U-UDVEf2gjBnQGULfglelz-JaDrk3SPUpStN6n6YgpXAzVwh29nwHrvHLPl6XFNY3xP50RWi4)
+• metadata: Contains administrative details, including the name of your deployment and operational tags (labels). [1] (/goto?url=CAESYwHrOzAVi4Nc6_8fH99ws1OGGJioVkp3bjndipyB_xNyaLDvgqtYAEKQQ6xbAyUzeRIsq_VMZraUYK2rY64NWzAt36kYSH7ZnOsEd9XZm7HcfkVp8WIUClRl8X6d-zf5uIvdOg), [2] (/goto?url=CAESjQEB6zswFR6z7UHKXuEah7U8MpP0A2mEqpsaY1CGuCBinp0rt-BSHhBx-KFkNPZynBdOuY_bYnNXRQv-NonNLStMZt1tsBTrj2UJAWKgeLCMG4WCYXUNs4U-UDVEf2gjBnQGULfglelz-JaDrk3SPUpStN6n6YgpXAzVwh29nwHrvHLPl6XFNY3xP50RWi4)
+• spec.replicas: The target number of identical pods Kubernetes will continuously run. [1] (/goto?url=CAESmQEB6zswFWLiwFyfXIJn4x_St4MEXLGSe7zzITB4I74zHVsjVmME5fM79PSwSvvwULxrZutTnEmXHS1K2MivpgNU3p0-ojpGzTqKNlcVwqWHcdE0sobMiYL661YH85QSfWBw7kFHFk6ahDTUqrP8ODL671bRLtw1RA32aK8yUQjHZEX72mO0rHIDOhx1tvsUVtsMTn-O0BUTQEo), [2] (/goto?url=CAESYwHrOzAVi4Nc6_8fH99ws1OGGJioVkp3bjndipyB_xNyaLDvgqtYAEKQQ6xbAyUzeRIsq_VMZraUYK2rY64NWzAt36kYSH7ZnOsEd9XZm7HcfkVp8WIUClRl8X6d-zf5uIvdOg)
+• spec.selector: Tells the deployment manager which pods to keep track of. Crucial rule: The matchLabels here must perfectly match the labels defined inside the template.metadata block. [1] (/goto?url=CAESYwHrOzAVi4Nc6_8fH99ws1OGGJioVkp3bjndipyB_xNyaLDvgqtYAEKQQ6xbAyUzeRIsq_VMZraUYK2rY64NWzAt36kYSH7ZnOsEd9XZm7HcfkVp8WIUClRl8X6d-zf5uIvdOg), [2] (/goto?url=CAESmQEB6zswFWLiwFyfXIJn4x_St4MEXLGSe7zzITB4I74zHVsjVmME5fM79PSwSvvwULxrZutTnEmXHS1K2MivpgNU3p0-ojpGzTqKNlcVwqWHcdE0sobMiYL661YH85QSfWBw7kFHFk6ahDTUqrP8ODL671bRLtw1RA32aK8yUQjHZEX72mO0rHIDOhx1tvsUVtsMTn-O0BUTQEo)
+• strategy: Controls how pod updates roll out. RollingUpdate safely updates containers sequentially to prevent application downtime. [1] (/goto?url=CAESkQEB6zswFaRZK_rhFssltoiIY3Xn1H6wBD5aTJlX_8F1U1uNTyaYunwvz15PgahsBh6-GfGi5NkICflTl7gnfBGScS1hF-wIBUBlyGED7J2ewDLkHkyT6uuAGpBmWjpqarbpw61B9cAWfSYma4PPxWhyM2XWLF_dP5R0cMRUpO5W5Qx2kvEUIY7KGSZEgzHAsp6c)
+• template: The exact blueprint used to spawn new pods when scaling or replacing instances. [1] (/goto?url=CAESiwEB6zswFWJoq-SiYErngwp7Qw65GxTBRds96Dgo0ciTxmu71uvFEtFjrbpQIU9U0bESgDDuU8VKO3J1Dz7Nn3-xv0_DywBpfd94x6lCh1LyQUczVw32J2z2YDSfBwMMQRen2PjwgAn4UYXrZrmCj6f0n7R0mMfvHsAMcIH9Qo5s3my_25YCSJT0pQPZ), [2] (/goto?url=CAESYwHrOzAVi4Nc6_8fH99ws1OGGJioVkp3bjndipyB_xNyaLDvgqtYAEKQQ6xbAyUzeRIsq_VMZraUYK2rY64NWzAt36kYSH7ZnOsEd9XZm7HcfkVp8WIUClRl8X6d-zf5uIvdOg)
+• resources: Enforces strict performance metrics. requests allocate baseline infrastructure, while limits prevent containers from eating up whole-node cluster resources.
+
+Essential Commands to Manage Your Deployment
+
+To apply the configuration and verify the deployment status, use the following kubectl commands: [1] (/goto?url=CAESjQEB6zswFR6z7UHKXuEah7U8MpP0A2mEqpsaY1CGuCBinp0rt-BSHhBx-KFkNPZynBdOuY_bYnNXRQv-NonNLStMZt1tsBTrj2UJAWKgeLCMG4WCYXUNs4U-UDVEf2gjBnQGULfglelz-JaDrk3SPUpStN6n6YgpXAzVwh29nwHrvHLPl6XFNY3xP50RWi4)
+bash
+# Apply the YAML configuration file
+kubectl apply -f deployment.yaml
+
+# Check the status of your running deployment
+kubectl get deployments
+
+# See the active pods managed by this deployment
+kubectl get pods -l app=nginx
+
+# Dynamically scale your replicas up or down
+kubectl scale deployment nginx-deployment --replicas=5
+Use code with caution.
+If you want to customize this configuration, let me know:
+• What container image (image) and port (containerPort) you are deploying? [1] (/goto?url=CAESjgEB6zswFTGYs8NRm3o24nOqlKJHvGldBUPrUhwjNHM4HC_VZ7cnt7OofK73oRLhG1avS0yK5mpG4-6fepks6LGHmfoWmJVU7m8ZXDfXt3lApS8FU15KK_RUCwlyXopdaX79CfdVWGxtHKYOjDyflutEoKdxFCqFJ7QNMhoXxOtZ8uvlCSt-JnlvTOFrzcW0), [2] (/goto?url=CAESmQEB6zswFWLiwFyfXIJn4x_St4MEXLGSe7zzITB4I74zHVsjVmME5fM79PSwSvvwULxrZutTnEmXHS1K2MivpgNU3p0-ojpGzTqKNlcVwqWHcdE0sobMiYL661YH85QSfWBw7kFHFk6ahDTUqrP8ODL671bRLtw1RA32aK8yUQjHZEX72mO0rHIDOhx1tvsUVtsMTn-O0BUTQEo)
+• Do you need to attach ConfigMaps, Secrets, or persistent volumes? [1] (/goto?url=CAESjQEB6zswFR6z7UHKXuEah7U8MpP0A2mEqpsaY1CGuCBinp0rt-BSHhBx-KFkNPZynBdOuY_bYnNXRQv-NonNLStMZt1tsBTrj2UJAWKgeLCMG4WCYXUNs4U-UDVEf2gjBnQGULfglelz-JaDrk3SPUpStN6n6YgpXAzVwh29nwHrvHLPl6XFNY3xP50RWi4)
+• Should I include a Service YAML block to expose this deployment to your network? [1] (/goto?url=CAESYwHrOzAVO6HdBCsAR6x10SqqnP9lbwqltzVnSPrYOrqEHmJQhQilLPvT-u7ud_GPi3brQl6gACkPCe8my837Wvl0VAwmF0gvJXKRK4O5QC3CIqGz0-_Mrej7YKNHPoQ_ngzOXQ), [2] (/goto?url=CAESmQEB6zswFWLiwFyfXIJn4x_St4MEXLGSe7zzITB4I74zHVsjVmME5fM79PSwSvvwULxrZutTnEmXHS1K2MivpgNU3p0-ojpGzTqKNlcVwqWHcdE0sobMiYL661YH85QSfWBw7kFHFk6ahDTUqrP8ODL671bRLtw1RA32aK8yUQjHZEX72mO0rHIDOhx1tvsUVtsMTn-O0BUTQEo)
